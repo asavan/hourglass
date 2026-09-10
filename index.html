@@ -456,20 +456,13 @@
                 top: 0;
                 left: 0;
                 width: 100vw;
-                height: auto;
-                max-height: 60px;
+                height: 60px;
                 border-left: none;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-                padding: 10px 16px 8px 16px;
-                overflow: hidden;
-                transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-                border-radius: 0 0 20px 20px;
+                padding: 10px 16px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
                 z-index: 30;
                 background: rgba(15, 23, 42, 0.92);
-            }
-            .side-panel.expanded {
-                max-height: 280px;
             }
             .top-actions {
                 flex-direction: row;
@@ -477,47 +470,12 @@
                 align-items: center;
                 height: 40px;
             }
-            #gyro-status-badge {
-                display: none !important;
-            }
             .timer-section {
                 margin: 0;
                 text-align: left;
             }
             .digital-clock {
-                font-size: 1.5rem;
-            }
-            .status-text {
-                display: none;
-            }
-            .side-panel.expanded .status-text {
-                display: block;
-                margin-top: 16px;
-                text-align: center;
-            }
-            .mobile-toggle {
-                display: flex;
-            }
-            .panel-handle {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                width: 100%;
-                padding-top: 10px;
-                padding-bottom: 4px;
-                cursor: pointer;
-            }
-            .handle-bar {
-                width: 36px;
-                height: 4px;
-                background-color: rgba(255, 255, 255, 0.25);
-                border-radius: 2px;
-            }
-            .chevron-icon {
-                transition: transform 0.3s ease;
-            }
-            .side-panel.expanded .chevron-icon {
-                transform: rotate(180deg);
+                font-size: 1.75rem;
             }
         }
     </style>
@@ -530,28 +488,15 @@
         <canvas id="hourglass-canvas"></canvas>
     </main>
 
-    <!-- Side Control Panel (Right side / Top Overlay on Mobile) -->
+    <!-- Side Control Panel (Right side / Top Bar on Mobile) -->
     <aside class="side-panel">
         <div class="top-actions">
-            <span id="gyro-status-badge" class="badge hidden">
-                <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18v-6m0 0V6m0 6h6m-6 0H6"/>
-                </svg>
-                Гироскоп
-            </span>
-
             <!-- Digital Clock Display -->
             <div class="timer-section">
                 <div id="digital-timer" class="digital-clock">01:00</div>
-                <div id="status-label" class="status-text">Переверните, чтобы запустить</div>
             </div>
 
             <div class="action-buttons">
-                <button id="panel-toggle-btn" class="icon-btn mobile-toggle" title="Информация" aria-label="Развернуть">
-                    <svg class="icon-md chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
                 <button id="manual-flip-btn" class="icon-btn" title="Перевернуть" aria-label="Перевернуть">
                     <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -564,14 +509,6 @@
                     </svg>
                 </button>
             </div>
-        </div>
-
-        <div id="gyro-hint" class="hint-text hidden">
-            💡 Часы управляются гироскопом: просто переверните смартфон!
-        </div>
-
-        <div id="panel-handle" class="panel-handle">
-            <span class="handle-bar"></span>
         </div>
     </aside>
 
@@ -654,7 +591,6 @@
         const canvas = document.getElementById('hourglass-canvas');
         const ctx = canvas.getContext('2d');
         const digitalTimer = document.getElementById('digital-timer');
-        const statusLabel = document.getElementById('status-label');
         const manualFlipBtn = document.getElementById('manual-flip-btn');
         const settingsBtn = document.getElementById('settings-btn');
         const settingsModal = document.getElementById('settings-modal');
@@ -665,35 +601,6 @@
         const testSoundBtn = document.getElementById('test-sound-btn');
         const gyroPermissionBlock = document.getElementById('gyro-permission-block');
         const requestGyroBtn = document.getElementById('request-gyro-btn');
-        const gyroStatusBadge = document.getElementById('gyro-status-badge');
-        const gyroHint = document.getElementById('gyro-hint');
-        const panelToggleBtn = document.getElementById('panel-toggle-btn');
-        const sidePanel = document.querySelector('.side-panel');
-        const panelHandle = document.getElementById('panel-handle');
-
-        function toggleMobilePanel() {
-            sidePanel.classList.toggle('expanded');
-        }
-
-        if (panelToggleBtn) panelToggleBtn.addEventListener('click', toggleMobilePanel);
-        if (panelHandle) panelHandle.addEventListener('click', toggleMobilePanel);
-
-        // Touch swipe gesture for expanding/collapsing panel on mobile
-        let touchStartY = 0;
-        sidePanel.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-        }, { passive: true });
-
-        sidePanel.addEventListener('touchend', (e) => {
-            const touchEndY = e.changedTouches[0].clientY;
-            const diffY = touchEndY - touchStartY;
-
-            if (diffY > 35 && !sidePanel.classList.contains('expanded')) {
-                sidePanel.classList.add('expanded');
-            } else if (diffY < -35 && sidePanel.classList.contains('expanded')) {
-                sidePanel.classList.remove('expanded');
-            }
-        }, { passive: true });
 
         let audioCtx = null;
 
@@ -1065,7 +972,6 @@
                 const remainingTop = isTopBulbA ? state.sandA : state.sandB;
                 if (remainingTop <= 0) {
                     state.isFinished = true;
-                    updateUI();
                     if (config.soundEnabled) {
                         playBeepBeepBeep();
                     }
@@ -1102,29 +1008,10 @@
                 `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
-        function updateUI() {
-            const rad = (state.visualRotation * Math.PI) / 180;
-            const isCanvasFlipped = (Math.cos(rad) < 0);
-            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
-            const currentTopSand = isTopBulbA ? state.sandA : state.sandB;
-
-            if (state.isFinished) {
-                statusLabel.textContent = 'Время вышло! 🔔';
-                statusLabel.className = 'status-text finished';
-            } else if (currentTopSand > 0) {
-                statusLabel.textContent = 'Песок течет...';
-                statusLabel.className = 'status-text running';
-            } else {
-                statusLabel.textContent = 'Переверните, чтобы запустить';
-                statusLabel.className = 'status-text';
-            }
-        }
-
         function flipHourglass() {
             getAudioContext();
             state.targetRotation += 180;
             state.isFinished = false;
-            updateUI();
         }
 
         function resetTimer() {
@@ -1141,7 +1028,6 @@
             }
             state.isFinished = false;
             state.sandParticles = [];
-            updateUI();
         }
 
         let isUpsideDown = false;
@@ -1152,7 +1038,6 @@
 
             if (!state.hasGyroscope) {
                 state.hasGyroscope = true;
-                onGyroscopeDetected();
             }
 
             const currentlyFlipped = (beta < -25);
@@ -1161,22 +1046,6 @@
                 isUpsideDown = currentlyFlipped;
                 state.isFinished = false;
                 getAudioContext();
-                updateUI();
-            }
-        }
-
-        function onGyroscopeDetected() {
-            gyroStatusBadge.classList.remove('hidden');
-            gyroHint.classList.remove('hidden');
-            manualFlipBtn.classList.add('hidden');
-            
-            const rad = (state.visualRotation * Math.PI) / 180;
-            const isCanvasFlipped = (Math.cos(rad) < 0);
-            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
-            const currentTopSand = isTopBulbA ? state.sandA : state.sandB;
-
-            if (currentTopSand === 0 && !state.isFinished) {
-                statusLabel.textContent = 'Гироскоп активен. Переверните часы!';
             }
         }
 
@@ -1215,7 +1084,6 @@
             resetTimer();
             config.showDigitalTimer = toggleDigitalTimer.checked;
             settingsModal.classList.add('hidden');
-            updateUI();
         });
 
         document.querySelectorAll('.preset-btn').forEach(btn => {
@@ -1248,7 +1116,6 @@
             initGyroscope();
             state.lastFrameTime = performance.now();
             requestAnimationFrame(updateSimulation);
-            updateUI();
         };
     </script>
 </body>
