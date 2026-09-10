@@ -440,10 +440,13 @@
             }
             .canvas-container {
                 position: absolute;
-                inset: 0;
+                top: 60px;
+                bottom: 0;
+                left: 0;
+                right: 0;
                 width: 100vw;
-                height: 100vh;
-                padding: 0;
+                height: calc(100vh - 60px);
+                padding: 0 5px;
                 z-index: 10;
             }
             .side-panel {
@@ -731,6 +734,17 @@
 
         window.addEventListener('resize', resizeCanvas);
 
+        function getGlassHeight(w, h) {
+            const capHeight = 16;
+            const extraHeight = capHeight * 2 + 10; // Caps top & bottom + padding
+            const extraWidth = 24 + 10; // Cap width margin + side padding
+            
+            const maxH = h - extraHeight;
+            const maxW = (w - extraWidth) / 0.52;
+            
+            return Math.max(120, Math.min(maxH, maxW));
+        }
+
         function updateSandParticles(dt, isFlowing, isTopBulbA, halfH, targetSandH) {
             if (isFlowing && Math.random() < 0.85) {
                 const speed = isTopBulbA ? (120 + Math.random() * 120) : -(120 + Math.random() * 120);
@@ -781,7 +795,7 @@
 
             ctx.rotate(rad);
 
-            const glassHeight = Math.min(h * 0.85, 420);
+            const glassHeight = getGlassHeight(w, h);
             const glassWidth = glassHeight * 0.52;
             const halfH = glassHeight / 2;
             const halfW = glassWidth / 2;
@@ -1008,7 +1022,10 @@
             const topSand = isTopBulbA ? state.sandA : state.sandB;
             const bottomSandAmount = isTopBulbA ? state.sandB : state.sandA;
 
-            const glassHeight = Math.min((canvas.height / (window.devicePixelRatio || 1)) * 0.85, 420);
+            const glassHeight = getGlassHeight(
+                canvas.width / (window.devicePixelRatio || 1),
+                canvas.height / (window.devicePixelRatio || 1)
+            );
             const halfH = glassHeight / 2;
             const maxSandH = halfH - 12;
             const targetSandH = maxSandH * Math.pow(bottomSandAmount, 0.85);
