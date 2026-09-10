@@ -71,7 +71,7 @@
         #hourglass-canvas {
             width: 100%;
             height: 100%;
-            display: block;
+            max-height: 100vh;
             object-fit: contain;
             cursor: pointer;
         }
@@ -401,7 +401,7 @@
                 right: 0;
                 width: 100vw;
                 height: calc(100dvh - 60px);
-                padding: 0 5px;
+                padding: 0;
                 margin: 0;
                 z-index: 10;
             }
@@ -413,7 +413,7 @@
                 height: 60px;
                 border-left: none;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-                padding: 0 12px;
+                padding: 0 16px;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
                 z-index: 30;
                 background: rgba(15, 23, 42, 0.92);
@@ -430,7 +430,7 @@
                 text-align: left;
             }
             .digital-clock {
-                font-size: 1.6rem;
+                font-size: 1.75rem;
             }
         }
     </style>
@@ -535,9 +535,7 @@
             targetRotation: 0,
             hasGyroscope: false,
             lastFrameTime: performance.now(),
-            sandParticles: [],
-            gravityX: 0,
-            gravityY: 1
+            sandParticles: []
         };
 
         const canvas = document.getElementById('hourglass-canvas');
@@ -613,30 +611,23 @@
 
         function getGlassHeight(w, h) {
             const capHeight = 16;
-            const extraHeight = capHeight * 2 + 32;
+            const extraHeight = capHeight * 2;
+            const extraWidth = 24;
             
             const maxH = h - extraHeight;
-            const maxW = w / 0.52;
+            const maxW = (w - extraWidth) / 0.52;
             
             return Math.max(120, Math.min(maxH, maxW));
         }
 
         function updateSandParticles(dt, isFlowing, isTopBulbA, halfH, targetSandH) {
-            // Calculate natural falling direction inside local bulb based on gravity
-            const rad = (state.visualRotation * Math.PI) / 180;
-            
-            // Gravity vector in local coordinates of the hourglass
-            const localGx = -Math.sin(rad) * state.gravityX + Math.cos(rad) * state.gravityY;
-            const localGy = -Math.cos(rad) * state.gravityX - Math.sin(rad) * state.gravityY;
-
             if (isFlowing && Math.random() < 0.85) {
-                const speed = 150 + Math.random() * 100;
-                // Spawn particles right at the neck or pouring direction
+                const speed = isTopBulbA ? (120 + Math.random() * 120) : -(120 + Math.random() * 120);
                 state.sandParticles.push({
                     x: (Math.random() - 0.5) * 4,
-                    y: isTopBulbA ? -6 : 6,
-                    vx: localGx * 40 + (Math.random() - 0.5) * 15,
-                    vy: localGy * speed + (Math.random() - 0.5) * 15,
+                    y: 0,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: speed,
                     size: 1.2 + Math.random() * 1.5,
                     life: 0
                 });
@@ -646,24 +637,13 @@
 
             for (let i = state.sandParticles.length - 1; i >= 0; i--) {
                 let p = state.sandParticles[i];
-                
-                // Accelerate particles according to local gravity
-                p.vx += localGx * 200 * dt;
-                p.vy += localGy * 200 * dt;
-
-                p.x += p.vx * dt;
                 p.y += p.vy * dt;
+                p.x += p.vx * dt;
                 p.life += dt;
 
-                // Restrict particles within bulb bounds & prevent leaking outside walls
-                const halfW = (getGlassHeight(canvas.width / (window.devicePixelRatio || 1), canvas.height / (window.devicePixelRatio || 1)) * 0.52) / 2;
-                if (Math.abs(p.x) > halfW - 4) {
-                    p.x = Math.sign(p.x) * (halfW - 4);
-                    p.vx *= -0.3;
-                }
-
                 const hitSand = isTopBulbA ? (p.y >= limitY) : (p.y <= -limitY);
-                if (p.life > 0.6 || hitSand) {
+
+                if (p.life > 0.55 || hitSand) {
                     state.sandParticles.splice(i, 1);
                 }
             }
@@ -709,7 +689,7 @@
             // Top Cap
             ctx.fillStyle = capGrad;
             ctx.beginPath();
-            ctx.roundRect(-capWidth/2, -halfH, capWidth, capHeight, [6, 6, 2, 2]);
+            ctx.roundRect(-capWidth/2, -halfH - capHeight, capWidth, capHeight, [6, 6, 2, 2]);
             ctx.fill();
             ctx.strokeStyle = 'rgba(255,255,255,0.2)';
             ctx.lineWidth = 1;
@@ -717,7 +697,7 @@
 
             // Bottom Cap
             ctx.beginPath();
-            ctx.roundRect(-capWidth/2, halfH - capHeight, capWidth, capHeight, [2, 2, 6, 6]);
+            ctx.roundRect(-capWidth/2, halfH, capWidth, capHeight, [2, 2, 6, 6]);
             ctx.fill();
             ctx.stroke();
 
@@ -735,8 +715,8 @@
             function drawBulbAPath() {
                 ctx.beginPath();
                 ctx.moveTo(-neckRadius, -6);
-                ctx.bezierCurveTo(-neckRadius - 10, -halfH * 0.4, -halfW, -halfH * 0.7, -halfW + 4, -halfH + capHeight);
-                ctx.lineTo(halfW - 4, -halfH + capHeight);
+                ctx.bezierCurveTo(-neckRadius - 10, -halfH * 0.4, -halfW, -halfH * 0.7, -halfW + 4, -halfH + 2);
+                ctx.lineTo(halfW - 4, -halfH + 2);
                 ctx.bezierCurveTo(halfW, -halfH * 0.7, neckRadius + 10, -halfH * 0.4, neckRadius, -6);
                 ctx.closePath();
             }
@@ -744,13 +724,13 @@
             function drawBulbBPath() {
                 ctx.beginPath();
                 ctx.moveTo(-neckRadius, 6);
-                ctx.bezierCurveTo(-neckRadius - 10, halfH * 0.4, -halfW, halfH * 0.7, -halfW + 4, halfH - capHeight);
-                ctx.lineTo(halfW - 4, halfH - capHeight);
+                ctx.bezierCurveTo(-neckRadius - 10, halfH * 0.4, -halfW, halfH * 0.7, -halfW + 4, halfH - 2);
+                ctx.lineTo(halfW - 4, halfH - 2);
                 ctx.bezierCurveTo(halfW, halfH * 0.7, neckRadius + 10, halfH * 0.4, neckRadius, 6);
                 ctx.closePath();
             }
 
-            const maxSandH = halfH - capHeight - 4;
+            const maxSandH = halfH - 12;
             const isCanvasFlipped = (Math.cos(rad) < 0);
             const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
 
@@ -773,19 +753,19 @@
                 ctx.beginPath();
 
                 if (isTopA) {
-                    const sandY = -halfH + capHeight + sandH;
+                    const sandY = -sandH;
                     const funnelDip = (state.sandA > 0.005 && state.sandA < 0.98) ? Math.min(10, sandH * 0.4) : 2;
                     ctx.moveTo(-halfW, sandY);
                     ctx.quadraticCurveTo(0, sandY + funnelDip, halfW, sandY);
-                    ctx.lineTo(halfW, -halfH + capHeight);
-                    ctx.lineTo(-halfW, -halfH + capHeight);
+                    ctx.lineTo(halfW, 0);
+                    ctx.lineTo(-halfW, 0);
                 } else {
-                    const sandY = -halfH + capHeight + sandH;
+                    const sandY = -halfH + sandH;
                     const conePeak = (state.sandB > 0.005 && state.sandA < 0.98) ? 12 : 2;
-                    ctx.moveTo(-halfW, -halfH + capHeight);
+                    ctx.moveTo(-halfW, -halfH);
                     ctx.lineTo(-halfW, sandY - conePeak / 2);
                     ctx.quadraticCurveTo(0, sandY + conePeak, halfW, sandY - conePeak / 2);
-                    ctx.lineTo(halfW, -halfH + capHeight);
+                    ctx.lineTo(halfW, -halfH);
                 }
                 ctx.closePath();
                 ctx.fill();
@@ -811,12 +791,12 @@
                 ctx.beginPath();
 
                 if (!isTopB) {
-                    const sandY = halfH - capHeight - sandH;
+                    const sandY = halfH - sandH;
                     const conePeak = (state.sandA > 0.005 && state.sandB < 0.98) ? 12 : 2;
-                    ctx.moveTo(-halfW, halfH - capHeight);
+                    ctx.moveTo(-halfW, halfH);
                     ctx.lineTo(-halfW, sandY + conePeak / 2);
-                    ctx.quadraticCurveTo(0, sandY - conePeak, halfW, sandY + conePeak / 2);
-                    ctx.lineTo(halfW, halfH - capHeight);
+                    ctx.quadraticCurveTo(0, sandY - conePeak, halfW, sandY - conePeak / 2);
+                    ctx.lineTo(halfW, halfH);
                 } else {
                     const sandY = sandH;
                     const funnelDip = (state.sandB > 0.005 && state.sandB < 0.98) ? Math.min(10, sandH * 0.4) : 2;
@@ -830,6 +810,7 @@
                 ctx.restore();
             }
 
+            // Stream & Particles
             const topSandAmount = isTopBulbA ? state.sandA : state.sandB;
             const bottomSandAmount = isTopBulbA ? state.sandB : state.sandA;
             const targetSandH = maxSandH * Math.pow(bottomSandAmount, 0.85);
@@ -842,6 +823,23 @@
                     drawBulbAPath();
                 }
                 ctx.clip();
+
+                const streamDir = isTopBulbA ? 1 : -1;
+                const streamLength = halfH - targetSandH;
+
+                const streamGrad = ctx.createLinearGradient(0, 0, 0, streamLength * streamDir);
+                streamGrad.addColorStop(0, '#fef08a');
+                streamGrad.addColorStop(0.5, '#eab308');
+                streamGrad.addColorStop(1, 'rgba(234, 179, 8, 0.3)');
+
+                ctx.fillStyle = streamGrad;
+                ctx.beginPath();
+                if (isTopBulbA) {
+                    ctx.rect(-1.5, 0, 3, streamLength);
+                } else {
+                    ctx.rect(-1.5, -streamLength, 3, streamLength);
+                }
+                ctx.fill();
 
                 ctx.fillStyle = '#fef08a';
                 state.sandParticles.forEach(p => {
@@ -858,23 +856,23 @@
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
 
             ctx.beginPath();
-            ctx.moveTo(-halfW + 4, -halfH + capHeight);
+            ctx.moveTo(-halfW + 4, -halfH + 2);
             ctx.bezierCurveTo(-halfW, -halfH * 0.7, -neckRadius - 10, -halfH * 0.4, -neckRadius, -2);
             ctx.lineTo(-neckRadius, 2);
-            ctx.bezierCurveTo(-neckRadius - 10, halfH * 0.4, -halfW, halfH * 0.7, -halfW + 4, halfH - capHeight);
+            ctx.bezierCurveTo(-neckRadius - 10, halfH * 0.4, -halfW, halfH * 0.7, -halfW + 4, halfH - 2);
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.moveTo(halfW - 4, -halfH + capHeight);
+            ctx.moveTo(halfW - 4, -halfH + 2);
             ctx.bezierCurveTo(halfW, -halfH * 0.7, neckRadius + 10, -halfH * 0.4, neckRadius, -2);
             ctx.lineTo(neckRadius, 2);
-            ctx.bezierCurveTo(neckRadius + 10, halfH * 0.4, halfW, halfH * 0.7, halfW - 4, halfH - capHeight);
+            ctx.bezierCurveTo(neckRadius + 10, halfH * 0.4, halfW, halfH * 0.7, halfW - 4, halfH - 2);
             ctx.stroke();
 
             ctx.lineWidth = 1.5;
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.beginPath();
-            ctx.moveTo(-halfW + 8, -halfH + capHeight + 14);
+            ctx.moveTo(-halfW + 8, -halfH + 16);
             ctx.bezierCurveTo(-halfW + 5, -halfH * 0.6, -neckRadius - 6, -halfH * 0.35, -neckRadius - 2, -12);
             ctx.stroke();
 
@@ -897,7 +895,7 @@
                 canvas.height / (window.devicePixelRatio || 1)
             );
             const halfH = glassHeight / 2;
-            const maxSandH = halfH - 16 - 4;
+            const maxSandH = halfH - 12;
             const targetSandH = maxSandH * Math.pow(bottomSandAmount, 0.85);
 
             if (topSand > 0) {
@@ -975,21 +973,12 @@
         let isUpsideDown = false;
 
         function handleOrientation(event) {
-            const beta = event.beta;  // Front/back tilt [-180, 180]
-            const gamma = event.gamma; // Left/right tilt [-90, 90]
-            
+            const beta = event.beta;
             if (beta === null || beta === undefined) return;
 
             if (!state.hasGyroscope) {
                 state.hasGyroscope = true;
             }
-
-            // Map orientation angles to 2D gravity vector (screen space)
-            const radB = (beta * Math.PI) / 180;
-            const radG = (gamma * Math.PI) / 180;
-            
-            state.gravityX = Math.sin(radG);
-            state.gravityY = Math.cos(radB) * Math.cos(radG);
 
             const currentlyFlipped = (beta < -25);
 
@@ -999,6 +988,7 @@
                 getAudioContext();
             }
 
+            // Rotate the top panel digital timer to stay upright when phone is flipped
             if (window.innerWidth <= 600) {
                 const timerRotation = currentlyFlipped ? 180 : 0;
                 timerSection.style.transform = `rotate(${timerRotation}deg)`;
