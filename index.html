@@ -988,7 +988,6 @@
                 getAudioContext();
             }
 
-            // Rotate the top panel digital timer to stay upright when phone is flipped
             if (window.innerWidth <= 600) {
                 const timerRotation = currentlyFlipped ? 180 : 0;
                 timerSection.style.transform = `rotate(${timerRotation}deg)`;
