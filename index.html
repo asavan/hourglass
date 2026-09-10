@@ -415,6 +415,14 @@
             color: #34d399;
         }
 
+        .mobile-toggle {
+            display: none;
+        }
+
+        .panel-handle {
+            display: none;
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 0.4; transform: scale(1); }
             50% { opacity: 0.8; transform: scale(1.05); }
@@ -428,21 +436,67 @@
         @media (max-width: 600px) {
             body {
                 flex-direction: column;
+                position: relative;
             }
             .canvas-container {
-                height: 72vh;
+                position: absolute;
+                inset: 0;
                 width: 100vw;
+                height: 100vh;
+                padding: 0;
+                z-index: 10;
             }
             .side-panel {
+                position: absolute;
+                top: 0;
+                left: 0;
                 width: 100vw;
-                height: 28vh;
+                height: auto;
+                max-height: 60px;
                 border-left: none;
-                border-top: 1px solid rgba(255, 255, 255, 0.08);
-                padding: 12px 16px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+                padding: 10px 16px 8px 16px;
+                overflow: hidden;
+                transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+                border-radius: 0 0 20px 20px;
+                z-index: 30;
+                background: rgba(15, 23, 42, 0.92);
+            }
+            .side-panel.expanded {
+                max-height: 280px;
             }
             .top-actions {
                 flex-direction: row;
                 justify-content: space-between;
+                height: 40px;
+            }
+            .mobile-toggle {
+                display: flex;
+            }
+            .panel-handle {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
+                padding-top: 10px;
+                padding-bottom: 4px;
+                cursor: pointer;
+            }
+            .handle-bar {
+                width: 36px;
+                height: 4px;
+                background-color: rgba(255, 255, 255, 0.25);
+                border-radius: 2px;
+            }
+            .chevron-icon {
+                transition: transform 0.3s ease;
+            }
+            .side-panel.expanded .chevron-icon {
+                transform: rotate(180deg);
+            }
+            .timer-section {
+                margin: 16px 0 8px 0;
             }
         }
     </style>
@@ -455,7 +509,7 @@
         <canvas id="hourglass-canvas"></canvas>
     </main>
 
-    <!-- Side Control Panel (Right side) -->
+    <!-- Side Control Panel (Right side / Top Overlay on Mobile) -->
     <aside class="side-panel">
         <div class="top-actions">
             <span id="gyro-status-badge" class="badge hidden">
@@ -466,6 +520,11 @@
             </span>
 
             <div class="action-buttons">
+                <button id="panel-toggle-btn" class="icon-btn mobile-toggle" title="Информация" aria-label="Развернуть">
+                    <svg class="icon-md chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
                 <button id="manual-flip-btn" class="icon-btn" title="Перевернуть" aria-label="Перевернуть">
                     <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -488,6 +547,10 @@
 
         <div id="gyro-hint" class="hint-text hidden">
             💡 Часы управляются гироскопом: просто переверните смартфон!
+        </div>
+
+        <div id="panel-handle" class="panel-handle">
+            <span class="handle-bar"></span>
         </div>
     </aside>
 
@@ -583,6 +646,33 @@
         const requestGyroBtn = document.getElementById('request-gyro-btn');
         const gyroStatusBadge = document.getElementById('gyro-status-badge');
         const gyroHint = document.getElementById('gyro-hint');
+        const panelToggleBtn = document.getElementById('panel-toggle-btn');
+        const sidePanel = document.querySelector('.side-panel');
+        const panelHandle = document.getElementById('panel-handle');
+
+        function toggleMobilePanel() {
+            sidePanel.classList.toggle('expanded');
+        }
+
+        if (panelToggleBtn) panelToggleBtn.addEventListener('click', toggleMobilePanel);
+        if (panelHandle) panelHandle.addEventListener('click', toggleMobilePanel);
+
+        // Touch swipe gesture for expanding/collapsing panel on mobile
+        let touchStartY = 0;
+        sidePanel.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        sidePanel.addEventListener('touchend', (e) => {
+            const touchEndY = e.changedTouches[0].clientY;
+            const diffY = touchEndY - touchStartY;
+
+            if (diffY > 35 && !sidePanel.classList.contains('expanded')) {
+                sidePanel.classList.add('expanded');
+            } else if (diffY < -35 && sidePanel.classList.contains('expanded')) {
+                sidePanel.classList.remove('expanded');
+            }
+        }, { passive: true });
 
         let audioCtx = null;
 
