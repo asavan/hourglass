@@ -753,13 +753,16 @@
 
             const maxSandH = halfH - 12;
 
+            const isCanvasFlipped = (Math.cos(rad) < 0);
+            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
+
             // Render Sand in Local Bulb A
             if (state.sandA > 0.0005) {
                 ctx.save();
                 drawBulbAPath();
                 ctx.clip();
 
-                const isTopA = (cosA >= 0);
+                const isTopA = isTopBulbA;
                 const visualRatioA = isTopA ? Math.pow(state.sandA, 0.6) : Math.pow(state.sandA, 0.85);
                 const sandH = Math.max(isTopA ? 6 : 2, maxSandH * visualRatioA);
 
@@ -771,7 +774,7 @@
                 ctx.fillStyle = sandGrad;
                 ctx.beginPath();
 
-                if (cosA >= 0) {
+                if (isTopA) {
                     const sandY = -sandH;
                     const funnelDip = (state.sandA > 0.005 && state.sandA < 0.98) ? Math.min(10, sandH * 0.4) : 2;
                     ctx.moveTo(-halfW, sandY);
@@ -797,7 +800,7 @@
                 drawBulbBPath();
                 ctx.clip();
 
-                const isTopB = (cosA < 0);
+                const isTopB = !isTopBulbA;
                 const visualRatioB = isTopB ? Math.pow(state.sandB, 0.6) : Math.pow(state.sandB, 0.85);
                 const sandH = Math.max(isTopB ? 6 : 2, maxSandH * visualRatioB);
 
@@ -809,7 +812,7 @@
                 ctx.fillStyle = sandGrad;
                 ctx.beginPath();
 
-                if (cosA >= 0) {
+                if (!isTopB) {
                     const sandY = halfH - sandH;
                     const conePeak = (state.sandA > 0.005 && state.sandB < 0.98) ? 12 : 2;
                     ctx.moveTo(-halfW, halfH);
@@ -830,12 +833,11 @@
             }
 
             // Stream physics
-            const isTopBulbA = (cosA >= 0);
             const topSandAmount = isTopBulbA ? state.sandA : state.sandB;
             const bottomSandAmount = isTopBulbA ? state.sandB : state.sandA;
             const targetSandH = maxSandH * Math.pow(bottomSandAmount, 0.85);
 
-            if (topSandAmount > 0.0001 && Math.abs(cosA) > 0.2) {
+            if (topSandAmount > 0.0001) {
                 ctx.save();
                 
                 if (isTopBulbA) {
@@ -910,9 +912,9 @@
             state.lastFrameTime = now;
 
             const rad = (state.visualRotation * Math.PI) / 180;
-            const cosA = Math.cos(rad);
+            const isCanvasFlipped = (Math.cos(rad) < 0);
+            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
 
-            const isTopBulbA = (cosA >= 0);
             const topSand = isTopBulbA ? state.sandA : state.sandB;
             const bottomSandAmount = isTopBulbA ? state.sandB : state.sandA;
 
@@ -923,7 +925,7 @@
 
             let isFlowing = false;
 
-            if (topSand > 0 && Math.abs(cosA) > 0.2) {
+            if (topSand > 0) {
                 isFlowing = true;
                 const deltaSand = dt / state.totalSeconds;
 
@@ -963,8 +965,9 @@
             digitalTimer.style.display = 'block';
 
             const rad = (state.visualRotation * Math.PI) / 180;
-            const cosA = Math.cos(rad);
-            const currentTopSand = (cosA >= 0) ? state.sandA : state.sandB;
+            const isCanvasFlipped = (Math.cos(rad) < 0);
+            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
+            const currentTopSand = isTopBulbA ? state.sandA : state.sandB;
 
             const remainingSeconds = Math.max(0, Math.ceil(currentTopSand * state.totalSeconds));
             const mins = Math.floor(remainingSeconds / 60);
@@ -976,8 +979,9 @@
 
         function updateUI() {
             const rad = (state.visualRotation * Math.PI) / 180;
-            const cosA = Math.cos(rad);
-            const currentTopSand = (cosA >= 0) ? state.sandA : state.sandB;
+            const isCanvasFlipped = (Math.cos(rad) < 0);
+            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
+            const currentTopSand = isTopBulbA ? state.sandA : state.sandB;
 
             if (state.isFinished) {
                 statusLabel.textContent = 'Время вышло! 🔔';
@@ -1000,8 +1004,10 @@
 
         function resetTimer() {
             const rad = (state.targetRotation * Math.PI) / 180;
-            const cosA = Math.cos(rad);
-            if (cosA >= 0) {
+            const isCanvasFlipped = (Math.cos(rad) < 0);
+            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
+
+            if (isTopBulbA) {
                 state.sandA = 0.0;
                 state.sandB = 1.0;
             } else {
@@ -1028,7 +1034,9 @@
 
             if (currentlyFlipped !== isUpsideDown) {
                 isUpsideDown = currentlyFlipped;
-                flipHourglass();
+                state.isFinished = false;
+                getAudioContext();
+                updateUI();
             }
         }
 
@@ -1038,8 +1046,9 @@
             manualFlipBtn.classList.add('hidden');
             
             const rad = (state.visualRotation * Math.PI) / 180;
-            const cosA = Math.cos(rad);
-            const currentTopSand = (cosA >= 0) ? state.sandA : state.sandB;
+            const isCanvasFlipped = (Math.cos(rad) < 0);
+            const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
+            const currentTopSand = isTopBulbA ? state.sandA : state.sandB;
 
             if (currentTopSand === 0 && !state.isFinished) {
                 statusLabel.textContent = 'Гироскоп активен. Переверните часы!';
