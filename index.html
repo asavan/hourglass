@@ -79,6 +79,7 @@
         .side-panel {
             width: 260px;
             height: 100vh;
+            height: 100dvh;
             padding: 24px 16px;
             z-index: 20;
             display: flex;
@@ -139,22 +140,11 @@
             height: 22px;
         }
 
-        .badge {
-            font-size: 0.75rem;
-            padding: 3px 10px;
-            border-radius: 9999px;
-            background-color: rgba(6, 78, 59, 0.8);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.4);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
         .timer-section {
             z-index: 20;
             text-align: center;
             margin: auto 0;
+            transition: transform 0.3s ease;
         }
 
         .digital-clock {
@@ -164,31 +154,6 @@
             color: var(--text-amber);
             font-family: monospace;
             text-shadow: 0 0 14px rgba(252, 211, 77, 0.4);
-        }
-
-        .status-text {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            margin-top: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-        }
-
-        .status-text.running {
-            color: var(--amber-gold);
-        }
-
-        .status-text.finished {
-            color: var(--rose-red);
-            font-weight: 700;
-            animation: bounce 1s infinite;
-        }
-
-        .hint-text {
-            font-size: 0.75rem;
-            color: #64748b;
-            text-align: center;
-            line-height: 1.4;
         }
 
         .modal-overlay {
@@ -418,22 +383,9 @@
             color: #34d399;
         }
 
-        .mobile-toggle {
-            display: none;
-        }
-
-        .panel-handle {
-            display: none;
-        }
-
         @keyframes pulse {
             0%, 100% { opacity: 0.4; transform: scale(1); }
             50% { opacity: 0.8; transform: scale(1.05); }
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
         }
 
         @media (max-width: 600px) {
@@ -449,7 +401,7 @@
                 right: 0;
                 width: 100vw;
                 height: calc(100dvh - 60px);
-                padding: 0;
+                padding: 0 5px;
                 margin: 0;
                 z-index: 10;
             }
@@ -485,26 +437,21 @@
 </head>
 <body>
 
-    <!-- Main Hourglass Canvas View (Left side, Full Height) -->
+    <!-- Main Hourglass Canvas View -->
     <main class="canvas-container">
         <div class="ambient-glow"></div>
         <canvas id="hourglass-canvas"></canvas>
     </main>
 
-    <!-- Side Control Panel (Right side / Top Bar on Mobile) -->
+    <!-- Side Control Panel / Top Bar on Mobile -->
     <aside class="side-panel">
         <div class="top-actions">
             <!-- Digital Clock Display -->
-            <div class="timer-section">
+            <div class="timer-section" id="timer-section">
                 <div id="digital-timer" class="digital-clock">01:00</div>
             </div>
 
             <div class="action-buttons">
-                <button id="manual-flip-btn" class="icon-btn" title="Перевернуть" aria-label="Перевернуть">
-                    <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                </button>
                 <button id="settings-btn" class="icon-btn" title="Настройки" aria-label="Настройки">
                     <svg class="icon-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -561,7 +508,7 @@
                         <svg class="icon-sm text-emerald" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18v-6m0 0V6m0 6h6m-6 0H6"/>
                         </svg>
-                        <span>Включить/Разрешить гироскоп</span>
+                        <span>Разрешить гироскоп</span>
                     </button>
                 </div>
             </div>
@@ -581,8 +528,8 @@
 
         let state = {
             totalSeconds: 60,
-            sandA: 0.0, // Top bulb sand ratio
-            sandB: 1.0, // Bottom bulb sand ratio
+            sandA: 0.0,
+            sandB: 1.0,
             isFinished: false,
             visualRotation: 0,
             targetRotation: 0,
@@ -594,7 +541,7 @@
         const canvas = document.getElementById('hourglass-canvas');
         const ctx = canvas.getContext('2d');
         const digitalTimer = document.getElementById('digital-timer');
-        const manualFlipBtn = document.getElementById('manual-flip-btn');
+        const timerSection = document.getElementById('timer-section');
         const settingsBtn = document.getElementById('settings-btn');
         const settingsModal = document.getElementById('settings-modal');
         const closeSettingsBtn = document.getElementById('close-settings-btn');
@@ -664,8 +611,8 @@
 
         function getGlassHeight(w, h) {
             const capHeight = 16;
-            const extraHeight = capHeight * 2; // Exact cap height without extra margins
-            const extraWidth = 24; // Cap width margin
+            const extraHeight = capHeight * 2;
+            const extraWidth = 10;
             
             const maxH = h - extraHeight;
             const maxW = (w - extraWidth) / 0.52;
@@ -739,7 +686,7 @@
             capGrad.addColorStop(0.7, '#a37042');
             capGrad.addColorStop(1, '#5c3a21');
 
-            // Top Wooden Cap
+            // Top Cap
             ctx.fillStyle = capGrad;
             ctx.beginPath();
             ctx.roundRect(-capWidth/2, -halfH - capHeight, capWidth, capHeight, [6, 6, 2, 2]);
@@ -748,7 +695,7 @@
             ctx.lineWidth = 1;
             ctx.stroke();
 
-            // Bottom Wooden Cap
+            // Bottom Cap
             ctx.beginPath();
             ctx.roundRect(-capWidth/2, halfH, capWidth, capHeight, [2, 2, 6, 6]);
             ctx.fill();
@@ -784,11 +731,10 @@
             }
 
             const maxSandH = halfH - 12;
-
             const isCanvasFlipped = (Math.cos(rad) < 0);
             const isTopBulbA = isUpsideDown ? isCanvasFlipped : !isCanvasFlipped;
 
-            // Render Sand in Local Bulb A
+            // Sand in Bulb A
             if (state.sandA > 0.0005) {
                 ctx.save();
                 drawBulbAPath();
@@ -826,7 +772,7 @@
                 ctx.restore();
             }
 
-            // Render Sand in Local Bulb B
+            // Sand in Bulb B
             if (state.sandB > 0.0005) {
                 ctx.save();
                 drawBulbBPath();
@@ -864,14 +810,13 @@
                 ctx.restore();
             }
 
-            // Stream physics
+            // Stream & Particles
             const topSandAmount = isTopBulbA ? state.sandA : state.sandB;
             const bottomSandAmount = isTopBulbA ? state.sandB : state.sandA;
             const targetSandH = maxSandH * Math.pow(bottomSandAmount, 0.85);
 
             if (topSandAmount > 0.0001) {
                 ctx.save();
-                
                 if (isTopBulbA) {
                     drawBulbBPath();
                 } else {
@@ -907,10 +852,6 @@
             }
 
             // Outer Glass Shell & Reflection
-            ctx.lineWidth = 4;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-
-            // Outer Glass Shell & Soft Glare
             ctx.lineWidth = 3.5;
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
 
@@ -928,7 +869,6 @@
             ctx.bezierCurveTo(neckRadius + 10, halfH * 0.4, halfW, halfH * 0.7, halfW - 4, halfH - 2);
             ctx.stroke();
 
-            // Subtle Glass Highlight (Integrated Glare)
             ctx.lineWidth = 1.5;
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.beginPath();
@@ -958,10 +898,7 @@
             const maxSandH = halfH - 12;
             const targetSandH = maxSandH * Math.pow(bottomSandAmount, 0.85);
 
-            let isFlowing = false;
-
             if (topSand > 0) {
-                isFlowing = true;
                 const deltaSand = dt / state.totalSeconds;
 
                 if (isTopBulbA) {
@@ -1050,6 +987,14 @@
                 state.isFinished = false;
                 getAudioContext();
             }
+
+            // Rotate the top panel digital timer to stay upright when phone is flipped
+            if (window.innerWidth <= 600) {
+                const timerRotation = currentlyFlipped ? 180 : 0;
+                timerSection.style.transform = `rotate(${timerRotation}deg)`;
+            } else {
+                timerSection.style.transform = 'none';
+            }
         }
 
         function initGyroscope() {
@@ -1065,7 +1010,6 @@
             }
         }
 
-        manualFlipBtn.addEventListener('click', flipHourglass);
         canvas.addEventListener('click', flipHourglass);
 
         settingsBtn.addEventListener('click', () => {
@@ -1113,7 +1057,6 @@
             }
         });
 
-        // Application Start
         window.onload = function() {
             resizeCanvas();
             initGyroscope();
