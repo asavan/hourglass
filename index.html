@@ -34,6 +34,7 @@
             color: var(--text-main);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             height: 100vh;
+            height: 100dvh;
             width: 100vw;
             display: flex;
             flex-direction: row;
@@ -46,11 +47,12 @@
         .canvas-container {
             flex: 1;
             height: 100vh;
+            height: 100dvh;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 16px;
+            padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
             z-index: 10;
         }
 
@@ -445,8 +447,8 @@
                 left: 0;
                 right: 0;
                 width: 100vw;
-                height: calc(100vh - 60px);
-                padding: 0 5px;
+                height: calc(100dvh - 60px);
+                padding: 10px 10px calc(32px + env(safe-area-inset-bottom, 16px)) 10px;
                 z-index: 10;
             }
             .side-panel {
@@ -834,8 +836,8 @@
             pillarGrad.addColorStop(1, '#80532c');
 
             ctx.fillStyle = pillarGrad;
-            ctx.fillRect(-pillarOffset - 5, -halfH, 6, glassHeight);
-            ctx.fillRect(pillarOffset - 1, -halfH, 6, glassHeight);
+            ctx.fillRect(-pillarOffset - 3, -halfH, 6, glassHeight);
+            ctx.fillRect(pillarOffset - 3, -halfH, 6, glassHeight);
 
             function drawBulbAPath() {
                 ctx.beginPath();
@@ -982,6 +984,10 @@
             ctx.lineWidth = 4;
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
 
+            // Outer Glass Shell & Soft Glare
+            ctx.lineWidth = 3.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+
             ctx.beginPath();
             ctx.moveTo(-halfW + 4, -halfH + 2);
             ctx.bezierCurveTo(-halfW, -halfH * 0.7, -neckRadius - 10, -halfH * 0.4, -neckRadius, -2);
@@ -996,16 +1002,12 @@
             ctx.bezierCurveTo(neckRadius + 10, halfH * 0.4, halfW, halfH * 0.7, halfW - 4, halfH - 2);
             ctx.stroke();
 
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+            // Subtle Glass Highlight (Integrated Glare)
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.beginPath();
-            ctx.moveTo(-halfW + 12, -halfH + 20);
-            ctx.bezierCurveTo(-halfW + 8, -halfH * 0.6, -neckRadius - 14, -halfH * 0.3, -neckRadius - 4, -15);
-            ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(-halfW + 12, halfH - 20);
-            ctx.bezierCurveTo(-halfW + 8, halfH * 0.6, -neckRadius - 14, halfH * 0.3, -neckRadius - 4, 15);
+            ctx.moveTo(-halfW + 8, -halfH + 16);
+            ctx.bezierCurveTo(-halfW + 5, -halfH * 0.6, -neckRadius - 6, -halfH * 0.35, -neckRadius - 2, -12);
             ctx.stroke();
 
             ctx.restore();
