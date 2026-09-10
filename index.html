@@ -52,7 +52,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
+            padding: 0 16px env(safe-area-inset-bottom, 0px) 16px;
             z-index: 10;
         }
 
@@ -95,7 +95,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 16px;
         }
 
         .action-buttons {
@@ -448,7 +448,7 @@
                 right: 0;
                 width: 100vw;
                 height: calc(100dvh - 60px);
-                padding: 10px 10px calc(32px + env(safe-area-inset-bottom, 16px)) 10px;
+                padding: 0 10px env(safe-area-inset-bottom, 0px) 10px;
                 z-index: 10;
             }
             .side-panel {
@@ -474,7 +474,26 @@
             .top-actions {
                 flex-direction: row;
                 justify-content: space-between;
+                align-items: center;
                 height: 40px;
+            }
+            #gyro-status-badge {
+                display: none !important;
+            }
+            .timer-section {
+                margin: 0;
+                text-align: left;
+            }
+            .digital-clock {
+                font-size: 1.5rem;
+            }
+            .status-text {
+                display: none;
+            }
+            .side-panel.expanded .status-text {
+                display: block;
+                margin-top: 16px;
+                text-align: center;
             }
             .mobile-toggle {
                 display: flex;
@@ -500,9 +519,6 @@
             .side-panel.expanded .chevron-icon {
                 transform: rotate(180deg);
             }
-            .timer-section {
-                margin: 16px 0 8px 0;
-            }
         }
     </style>
 </head>
@@ -524,6 +540,12 @@
                 Гироскоп
             </span>
 
+            <!-- Digital Clock Display -->
+            <div class="timer-section">
+                <div id="digital-timer" class="digital-clock">01:00</div>
+                <div id="status-label" class="status-text">Переверните, чтобы запустить</div>
+            </div>
+
             <div class="action-buttons">
                 <button id="panel-toggle-btn" class="icon-btn mobile-toggle" title="Информация" aria-label="Развернуть">
                     <svg class="icon-md chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -542,12 +564,6 @@
                     </svg>
                 </button>
             </div>
-        </div>
-
-        <!-- Digital Clock Display -->
-        <div class="timer-section">
-            <div id="digital-timer" class="digital-clock">01:00</div>
-            <div id="status-label" class="status-text">Переверните, чтобы запустить</div>
         </div>
 
         <div id="gyro-hint" class="hint-text hidden">
