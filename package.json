@@ -1,0 +1,30 @@
+{
+  "name": "hourglass",
+  "version": "0.0.1",
+  "private": true,
+  "description": "hourglass",
+  "main": "index.js",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "android": "webpack --config webpack_configs/android.webpack.config.js --mode production",
+    "start": "webpack serve --config webpack_configs/webpack.config.js --mode development",
+    "build": "webpack --config webpack_configs/production.webpack.config.js --mode production",
+    "test": "node --test --test-reporter dot",
+    "test:verbose": "node --test",
+    "style": "npx eslint . -c linters/eslint.config.js",
+    "style:fix": "npx eslint . -c linters/eslint.config.js --fix",
+    "style2": "npx stylelint --config linters/stylelint.config.js \"src/**/*.css\"",
+    "style2:fix": "npx stylelint --config linters/stylelint.config.js \"src/**/*.css\" --fix",
+    "updates": "npx ncu",
+    "updates:fix": "npx ncu -u && npm install && npm audit fix"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asavan/hourglass.git"
+  },
+  "homepage": "https://asavan.github.io/hourglass/",
+  "devDependencies": {
+    "devdeps": "github:asavan/dev-deps#v0.3.1"
+  }
+}
